@@ -17,29 +17,29 @@ public class Movie implements Parcelable {
 
     // TODO: change datatypes as needed
     private String id;
-    private String poster_path;
-    private String original_title;
+    private String posterPath;
+    private String originalTitle;
     private String overview;
-    private String vote_average;
-    private String release_date;
+    private String voteAverage;
+    private String releaseDate;
 
     public Movie(String id, String poster_path, String original_title, String overview,
                  String vote_average, String release_date) {
         this.id = id;
-        this.poster_path = poster_path;
-        this.original_title = original_title;
+        this.posterPath = poster_path;
+        this.originalTitle = original_title;
         this.overview = overview;
-        this.vote_average = vote_average;
-        this.release_date = release_date;
+        this.voteAverage = vote_average;
+        this.releaseDate = release_date;
     }
 
     protected Movie(Parcel in) {
         id = in.readString();
-        poster_path = in.readString();
-        original_title = in.readString();
+        posterPath = in.readString();
+        originalTitle = in.readString();
         overview = in.readString();
-        vote_average = in.readString();
-        release_date = in.readString();
+        voteAverage = in.readString();
+        releaseDate = in.readString();
     }
 
     public static final Creator<Movie> CREATOR = new Creator<Movie>() {
@@ -62,27 +62,46 @@ public class Movie implements Parcelable {
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(id);
-        dest.writeString(poster_path);
-        dest.writeString(original_title);
+        dest.writeString(posterPath);
+        dest.writeString(originalTitle);
         dest.writeString(overview);
-        dest.writeString(vote_average);
-        dest.writeString(release_date);
+        dest.writeString(voteAverage);
+        dest.writeString(releaseDate);
     }
 
+    public String getId() {
+        return id;
+    }
 
-    public String getPoster_path() {
-        return poster_path;
+    public String getPosterPath() {
+        return posterPath;
+    }
+
+    public String getOriginalTitle() {
+        return originalTitle;
+    }
+
+    public String getOverview() {
+        return overview;
+    }
+
+    public String getVoteAverage() {
+        return voteAverage;
+    }
+
+    public String getReleaseDate() {
+        return releaseDate;
     }
 
     @Override
     public String toString() {
         return "Movie{" +
                 "id='" + id + '\'' +
-                ", poster_path='" + poster_path + '\'' +
-                ", original_title='" + original_title + '\'' +
+                ", posterPath='" + posterPath + '\'' +
+                ", originalTitle='" + originalTitle + '\'' +
                 ", overview='" + overview + '\'' +
-                ", vote_average='" + vote_average + '\'' +
-                ", release_date='" + release_date + '\'' +
+                ", voteAverage='" + voteAverage + '\'' +
+                ", releaseDate='" + releaseDate + '\'' +
                 '}';
     }
 }

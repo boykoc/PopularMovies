@@ -2,12 +2,15 @@ package com.example.android.popularmovies;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -33,6 +36,29 @@ public class MainActivityFragment extends Fragment {
     ImageAdapter mMovieAdapter;
 
     public MainActivityFragment() {
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // Add this line in order for this fragment to handle menu events.
+        setHasOptionsMenu(true);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            startActivity(new Intent(getActivity(), SettingsActivity.class));
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -97,7 +123,12 @@ public class MainActivityFragment extends Fragment {
     private void getMovieData() {
         // Create movie task and execute it
         FetchMovieDataTask movieDataTask = new FetchMovieDataTask();
-        movieDataTask.execute("popularity.desc");
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String sort_by = prefs.getString("sortOrder", "popularity.desc");
+        Log.w("myApp", "URI : " + sort_by);
+        movieDataTask.execute(sort_by);
+
+        //movieDataTask.execute("popularity.desc");
     }
 
     public class FetchMovieDataTask extends AsyncTask<String, Void, Movie[]> {
@@ -173,21 +204,37 @@ public class MainActivityFragment extends Fragment {
 
             // Will contain the raw JSON response as a string.
             String movieDataJsonStr = null;
-            String api_key = "YOUR_API_KEY_HERE";
+            String api_key = "YOUR_KEY_HERE";
 
             try {
-                // Construct the URL for the OpenWeatherMap query
-                // Possible parameters are avaiable at OWM's forecast API page, at
-                // http://openweathermap.org/API#forecast
+                // Construct the URL for the TMDB query
+                // After reviewing the TMDB documentation for their API I've decided to
+                // stick with using the discovery end-point for project 1.
+                // I've found that there are many ways to get the highest rated movies (e.g.
+                // sort_by=vote_average.desc only or top_rated end-point). To keep it consistent
+                // and to help ensure newer movies, with a high number of votes are included I have
+                // combined various params.  I have compared the returned JSON strings from
+                // top_rated and what I am using and feel the results are consistent while using
+                // the same end-point.
+
                 final String FORECAST_BASE_URL =
                         "http://api.themoviedb.org/3/discover/movie?";
                 final String QUERY_PARAM = "sort_by";
                 final String API_KEY = "api_key";
 
-                Uri builtUri = Uri.parse(FORECAST_BASE_URL).buildUpon()
-                        .appendQueryParameter(QUERY_PARAM, params[0])
-                        .appendQueryParameter(API_KEY, api_key)
-                        .build();
+                // Get string for pref_sort_order_highest_rated.
+                String sort_by = getResources().getString(R.string.pref_sort_order_highest_rated);
+
+                Uri.Builder builtUri = Uri.parse(FORECAST_BASE_URL).buildUpon();
+                builtUri.appendQueryParameter(QUERY_PARAM, params[0]);
+                // I want to append more query params to the URI builder if the param is requesting
+                // the movies to be sorted by highest rated.
+                if ( params[0].equals(sort_by) ) {
+                    builtUri.appendQueryParameter("vote_average.gte", "8.0")
+                            .appendQueryParameter("vote_count.gte", "50");
+                }
+
+                builtUri.appendQueryParameter(API_KEY, api_key).build();
 
                 Log.w("myApp", "URI : " + builtUri);
 

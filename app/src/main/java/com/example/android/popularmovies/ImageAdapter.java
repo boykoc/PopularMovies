@@ -48,10 +48,11 @@ public class ImageAdapter<S> extends ArrayAdapter {
         Movie movie = (Movie) objects.get(position);
 
         // TODO: remove Logs as needed
-        Log.w("myApp", TMDB_IMAGE_URL_BASE + TMDB_IMAGE_SIZE + movie.getPoster_path());
+        Log.w("myApp", TMDB_IMAGE_URL_BASE + TMDB_IMAGE_SIZE + movie.getPosterPath());
 
         // Picasso.with(context).load("http://i.imgur.com/DvpvklR.png").into(imageView);
-        Picasso.with(context).load(TMDB_IMAGE_URL_BASE + TMDB_IMAGE_SIZE + movie.getPoster_path()).into(imageView);
+        Picasso.with(context).load(TMDB_IMAGE_URL_BASE + TMDB_IMAGE_SIZE + movie.getPosterPath())
+                .into(imageView);
         return imageView;
         //return super.getView(position, convertView, parent);
     }
