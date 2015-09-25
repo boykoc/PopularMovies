@@ -26,10 +26,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 /**
- * A placeholder fragment containing a simple view.
+ * Main fragment for app.
  */
 public class MainActivityFragment extends Fragment {
 
@@ -38,6 +41,10 @@ public class MainActivityFragment extends Fragment {
     public MainActivityFragment() {
     }
 
+    /**
+     * Override to allow this fragment to handle menu events.
+     * @param savedInstanceState
+     */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,6 +52,12 @@ public class MainActivityFragment extends Fragment {
         setHasOptionsMenu(true);
     }
 
+    /**
+     * Handle option items being selected.
+     *
+     * @param item
+     * @return
+     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
@@ -61,25 +74,18 @@ public class MainActivityFragment extends Fragment {
         return super.onOptionsItemSelected(item);
     }
 
+    /**
+     * Override onCreateView to initialize adapter, fill gridview with movie data and
+     * setOnClickItemListener.
+     *
+     * @param inflater
+     * @param container
+     * @param savedInstanceState
+     * @return
+     */
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-
-    /*
-        mMovieAdapter = new ArrayAdapter<String>(
-                getActivity(),
-                R.layout.list_item_movie,
-                R.id.list_item_movie_imageView,
-                new ArrayList<String>());
-
-        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-
-        GridView gridView = (GridView) rootView.findViewById(R.id.movie_poster_gridView);
-        gridView.setAdapter(mMovieAdapter);
-
-
-        return rootView;
-    */
 
         mMovieAdapter = new ImageAdapter(
                 getActivity(),
@@ -95,46 +101,70 @@ public class MainActivityFragment extends Fragment {
 
         // Set click listener
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    Context context = getActivity();
-                    Movie movie = (Movie) mMovieAdapter.getItem(position); // Get the selected movie
+            /**
+             * OnItemClick launch an explicit intent for the detail activity for the selected item.
+             *
+             * @param parent
+             * @param view
+             * @param position
+             * @param id
+             */
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Context context = getActivity();
+                Movie movie = (Movie) mMovieAdapter.getItem(position); // Get the selected movie.
 
-                    // Call an explicit intent to launch the detail activity.
-                    Intent detailActivity = new Intent(context, Main2Activity.class);
-                    detailActivity.putExtra("com.package.Movie", movie);
-                    startActivity(detailActivity);
-                }
+                // Call an explicit intent to launch the detail activity.
+                Intent detailActivity = new Intent(context, MovieDetailActivity.class);
+                detailActivity.putExtra("com.package.Movie", movie);
+                startActivity(detailActivity);
             }
-
-        );
+        });
 
         return rootView;
 
     }
 
+    /**
+     * Override onStart to load movie data when the app starts.
+     */
     @Override
     public void onStart() {
         super.onStart();
         getMovieData();
     }
 
-    // Helper method to get Movie data
+    /**
+     * Helper method to get Movie data
+     */
     private void getMovieData() {
         // Create movie task and execute it
         FetchMovieDataTask movieDataTask = new FetchMovieDataTask();
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
         String sort_by = prefs.getString("sortOrder", "popularity.desc");
-        Log.w("myApp", "URI : " + sort_by);
         movieDataTask.execute(sort_by);
-
-        //movieDataTask.execute("popularity.desc");
     }
 
     public class FetchMovieDataTask extends AsyncTask<String, Void, Movie[]> {
         private final String LOG_TAG = FetchMovieDataTask.class.getSimpleName();
 
-        // TODO: create readable date string for release date
+        /**
+         * Re-format the date string to only include year of release. Currently the release date is
+         * returned from the API as a string in YYYY-MM-DD format.
+         *
+         * @param apiDate
+         * @return
+         */
+        private String formatDate(String apiDate) {
+            SimpleDateFormat format = new SimpleDateFormat("yyyy"); // Set the format.
+            Date formatedDate = null; // Initialize Date date.
+            try {
+                formatedDate = format.parse(apiDate); // Create a date from the string.
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+            return format.format(formatedDate); // Create a formatted string from date.
+        }
 
         /**
          * BORROWED DESCRIPTION FROM LESSON 1-3 OF DEVELOPING ANDROID APPS
@@ -145,8 +175,11 @@ public class MainActivityFragment extends Fragment {
          *
          * Fortunately parsing is easy:  constructor takes the JSON string and converts it
          * into an Object hierarchy for us.
+         *
+         * @param movieDataJsonStr
+         * @return
+         * @throws JSONException
          */
-
         private Movie[] getMovieDataFromJson(String movieDataJsonStr) throws JSONException {
             // Names of the JSON objects that I need to get.
             final String TMDB_RESULTS = "results";
@@ -160,13 +193,11 @@ public class MainActivityFragment extends Fragment {
             JSONObject movieDataJson = new JSONObject(movieDataJsonStr);
             JSONArray movieDataArray = movieDataJson.getJSONArray(TMDB_RESULTS);
 
-            //String[] resultStrs = new String[movieDataArray.length()];
             Movie[] movieResults = new Movie[movieDataArray.length()];
 
-            // loop through all movie results to get necessary data
+            // Loop through all movie results to get necessary data.
             for(int i=0; i < movieDataArray.length(); i++) {
-                // TODO: change datatypes as needed
-                // Strings for each movie result item
+                // Strings for each movie result item.
                 String id;
                 String poster_path;
                 String original_title;
@@ -174,26 +205,30 @@ public class MainActivityFragment extends Fragment {
                 String vote_average;
                 String release_date;
 
-                // Get the current movie result
+                // Get the current movie result.
                 JSONObject movieData = movieDataArray.getJSONObject(i);
                 id = movieData.getString(TMDB_ID);
                 poster_path = movieData.getString(TMDB_POSTER_PATH);
                 original_title = movieData.getString(TMDB_ORIGINAL_TITLE);
                 overview = movieData.getString(TMDB_OVERVIEW);
                 vote_average = movieData.getString(TMDB_VOTE_AVERAGE);
-                release_date = movieData.getString(TMDB_RELEASE_DATE);
-                // resultStrs[i] = id + poster_path;
-                movieResults[i] = new Movie(id, poster_path, original_title, overview, vote_average, release_date);
+                release_date = formatDate(movieData.getString(TMDB_RELEASE_DATE));
+                // Add a new movie object to the Array.
+                movieResults[i] = new Movie(id, poster_path, original_title, overview, vote_average,
+                        release_date);
             }
-
-            Log.w("myApp", "RESULTS : " + movieResults[0]);
             return movieResults;
-
         }
 
+        /**
+         * Much of this method is adapted from the Sunshine app course materials.
+         *
+         * @param params
+         * @return
+         */
         @Override
         protected Movie[] doInBackground(String... params) {
-            // Verify size of params.
+            // Verify there is a param, if not stop process.
             if (params.length == 0) {
                 return null;
             }
@@ -204,7 +239,7 @@ public class MainActivityFragment extends Fragment {
 
             // Will contain the raw JSON response as a string.
             String movieDataJsonStr = null;
-            String api_key = "YOUR_KEY_HERE";
+            String api_key = "YOUR_API_KEY_HERE";
 
             try {
                 // Construct the URL for the TMDB query
@@ -235,8 +270,6 @@ public class MainActivityFragment extends Fragment {
                 }
 
                 builtUri.appendQueryParameter(API_KEY, api_key).build();
-
-                Log.w("myApp", "URI : " + builtUri);
 
                 URL url = new URL(builtUri.toString());
 
@@ -303,13 +336,8 @@ public class MainActivityFragment extends Fragment {
                 for(Movie dayForecastStr : result) {
                     mMovieAdapter.add(dayForecastStr);
                 }
-                // New data is back from the server.  Hooray!
+                // New data is back from the server.
             }
         }
-
-
     }
-
 }
-
-
